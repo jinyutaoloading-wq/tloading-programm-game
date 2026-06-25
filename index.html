@@ -1,38 +1,155 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>互动短剧游戏平台 Demo</title>
-<style>
-:root{--bg:#f5f7f8;--ink:#172125;--muted:#66757c;--line:#d9e2e3;--teal:#0f8f91;--coral:#f15f5b;--dark:#0b151a}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif;background:linear-gradient(135deg,rgba(15,143,145,.12),transparent 36%),var(--bg);color:var(--ink)}button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}.topbar{height:68px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.9);border-bottom:1px solid rgba(23,33,37,.08);position:sticky;top:0;z-index:5}.brand{display:flex;gap:12px;align-items:center}.logo{width:34px;height:34px;border-radius:8px;background:var(--dark);color:#fff;display:grid;place-items:center;font-weight:800}.brand b{display:block}.muted,.brand span{color:var(--muted);font-size:12px}.switch{display:grid;grid-template-columns:1fr 1fr;width:300px;padding:4px;border:1px solid var(--line);border-radius:8px;background:#eef3f3}.switch button{height:36px;border-radius:6px;background:transparent;font-weight:800;color:var(--muted)}.switch button.on{background:#fff;color:var(--ink);box-shadow:0 6px 18px rgba(15,27,33,.08)}main{padding:24px}.grid{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:390px 1fr;gap:24px}.phone{width:390px;max-width:calc(100vw - 48px);height:812px;border:10px solid #11191d;border-radius:36px;overflow:hidden;background:#081014;box-shadow:0 16px 40px rgba(20,37,44,.14);position:sticky;top:92px}.screen{height:100%;overflow:hidden;background:#f7f8f8;position:relative}.status{position:absolute;top:0;left:0;right:0;height:38px;padding:11px 18px 0;color:#fff;z-index:2;display:flex;justify-content:space-between;font-size:12px;font-weight:800}.page{height:100%;overflow:auto;padding-bottom:72px}.hero{height:230px;padding:86px 18px 18px;color:#fff;display:grid;align-content:end;background:radial-gradient(circle at 70% 20%,rgba(241,95,91,.48),transparent 18%),linear-gradient(145deg,#31444d,#081014 62%,#0f8f91)}h1,h2,h3,p{margin-top:0}.section{padding:16px}.row{display:flex;gap:10px;align-items:center;justify-content:space-between}.btn{min-height:42px;border-radius:8px;padding:0 16px;font-weight:800;background:#eef3f3;color:var(--ink)}.primary{color:#fff;background:linear-gradient(135deg,var(--teal),#14b3aa)}.danger{color:#fff;background:var(--coral)}.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px;text-align:left}.continue{width:100%;display:grid;grid-template-columns:74px 1fr;gap:12px}.thumb,.poster{border-radius:8px;background:linear-gradient(160deg,#263942,#0b151a 62%,#f15f5b)}.thumb{height:74px}.poster{height:118px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.cards button{background:transparent;text-align:left;padding:0}.name{font-weight:800;font-size:12px;margin-top:8px}.tabs{position:absolute;left:0;right:0;bottom:0;height:64px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px 8px 8px;background:rgba(255,255,255,.96);border-top:1px solid var(--line)}.tabs button{border-radius:8px;background:transparent;color:var(--muted);font-size:11px;font-weight:800}.tabs button.on{background:#e8f6f5;color:var(--teal)}.player{height:100%;display:grid;grid-template-rows:auto 1fr auto;color:#fff;background:radial-gradient(circle at 65% 28%,rgba(255,255,255,.18),transparent 16%),radial-gradient(circle at 30% 32%,rgba(241,95,91,.36),transparent 18%),linear-gradient(160deg,#2c3b43,#071014 66%,#0e7475)}.playerTop{padding:52px 16px 10px}.playerBody{display:grid;align-content:end;padding:20px 16px}.caption{padding:14px;border-radius:8px;background:rgba(8,16,20,.68)}.choiceBox{padding:14px 16px 18px;background:linear-gradient(180deg,transparent,rgba(5,8,10,.88) 25%)}.choice{width:100%;min-height:52px;margin-top:10px;border-radius:8px;color:#fff;background:linear-gradient(135deg,var(--teal),#12aaa4);font-weight:800;text-align:left;padding:12px}.choice:nth-of-type(2n){background:linear-gradient(135deg,var(--coral),#fa7a6d)}.map{min-height:100%;padding:54px 14px 88px;color:#fff;background:radial-gradient(circle at 50% 0,#18353d,#081014 46%)}.nodeGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px}.node{min-height:66px;border-radius:8px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:rgba(255,255,255,.65);font-size:11px;font-weight:800}.node.visited{background:rgba(15,143,145,.78);color:#fff}.node.current{background:rgba(200,149,63,.9);color:#fff}.node.locked{opacity:.55}.pay,.ending{min-height:100%;display:grid;align-content:center;gap:14px;padding:60px 18px 28px;color:#fff;background:linear-gradient(145deg,#17262e,#071014 66%,#0e7475);text-align:center}.payCard,.endingCard{padding:18px;border-radius:8px;background:rgba(8,16,20,.74);border:1px solid rgba(255,255,255,.14)}.price{font-size:36px;font-weight:900;margin:14px 0}.side{display:grid;gap:16px}.panel{background:rgba(255,255,255,.92);border:1px solid rgba(23,33,37,.08);border-radius:8px;box-shadow:0 10px 30px rgba(20,37,44,.08)}.panelHead{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.panelBody{padding:18px}.kpis,.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.flow{grid-template-columns:repeat(3,1fr)}.kpi,.flow div{padding:14px;border:1px solid var(--line);border-radius:8px;background:#fff}.kpi b{display:block;font-size:22px;margin-top:6px}.pill{display:inline-flex;padding:5px 10px;border-radius:999px;background:#e8f6f5;color:#087173;font-size:12px;font-weight:800}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left}.admin{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:220px 1fr;gap:20px}.nav{display:grid;gap:8px;align-content:start}.nav button{height:42px;border-radius:8px;background:#fff;color:var(--muted);text-align:left;padding:0 12px;font-weight:800;border:1px solid var(--line)}.nav button.on{background:#e8f6f5;color:#087173}.canvas{min-height:420px;border:1px solid var(--line);border-radius:8px;background:linear-gradient(rgba(23,33,37,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(23,33,37,.06) 1px,transparent 1px),#f7f9f9;background-size:28px 28px;position:relative}.gNode{position:absolute;width:126px;min-height:64px;padding:9px;border:1px solid var(--line);border-radius:8px;background:#fff;text-align:left;box-shadow:0 10px 22px rgba(20,37,44,.08)}.gNode.active{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,143,145,.12)}.form{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:grid;gap:7px}.field label{font-size:12px;font-weight:800;color:var(--muted)}.field input,.field textarea,.field select{min-height:40px;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff}.full{grid-column:1/-1}.bar{height:14px;border-radius:999px;background:#e0e8e8;overflow:hidden}.bar i{display:block;height:100%;width:var(--w);background:linear-gradient(90deg,var(--teal),var(--coral))}.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);padding:12px 14px;border-radius:8px;background:rgba(15,27,33,.94);color:#fff;font-weight:800}@media(max-width:900px){.topbar{height:auto;padding:14px;display:grid;gap:12px}.switch{width:100%}.grid,.admin,.kpis,.flow,.form{grid-template-columns:1fr}.phone{position:static}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>互动短剧游戏平台 Demo</title>
+  <link rel="stylesheet" href="./shared/runtime-assets.css">
+  <link rel="stylesheet" href="./shared/base.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 12% 0, rgba(15, 143, 145, .2), transparent 32%),
+        radial-gradient(circle at 88% 12%, rgba(241, 95, 91, .14), transparent 28%),
+        #f6f8f8;
+    }
+
+    .portal {
+      width: min(960px, 100%);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .portal-head {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 8px;
+    }
+
+    .portal-head h1 {
+      margin-bottom: 6px;
+      font-size: clamp(30px, 5vw, 52px);
+      letter-spacing: 0;
+    }
+
+    .portal-head p {
+      margin-bottom: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .entry-card {
+      min-height: 360px;
+      display: grid;
+      align-content: end;
+      gap: 12px;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      border-radius: 8px;
+      padding: 22px;
+      color: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .entry-card::before,
+    .entry-card::after {
+      position: absolute;
+      inset: 0;
+      content: "";
+      z-index: -2;
+      background-image: var(--asset-poster);
+      background-size: cover;
+      background-position: center;
+    }
+
+    .entry-card.admin::before {
+      background-image: var(--asset-admin-canvas);
+    }
+
+    .entry-card::after {
+      z-index: -1;
+      background: linear-gradient(180deg, transparent, rgba(7, 16, 20, .82));
+    }
+
+    .entry-card.admin {
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .entry-card.admin::after {
+      background: linear-gradient(180deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, .94));
+    }
+
+    .entry-card h2 {
+      margin-bottom: 0;
+      font-size: 28px;
+    }
+
+    .entry-card p {
+      max-width: 320px;
+      margin-bottom: 4px;
+      color: currentColor;
+      opacity: .76;
+      line-height: 1.65;
+    }
+
+    .entry-card a {
+      width: max-content;
+      display: inline-grid;
+      place-items: center;
+      min-height: 44px;
+      border-radius: 8px;
+      padding: 0 18px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 900;
+    }
+
+    .entry-card.admin a {
+      background: var(--dark);
+      color: #fff;
+    }
+
+    @media (max-width: 780px) {
+      .portal,
+      .portal-head {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+    }
+  </style>
 </head>
 <body>
-<div id="app"></div>
-<script>
-const nodes={n1:{t:'第1章 初遇',s:'旧友重逢，她提出一个无法回避的问题。',c:[['坦诚相告','n2',20],['保持沉默','n3',0]],x:60,y:40},n2:{t:'第2章 扶持时刻',s:'她被推到舆论中心，你决定是否站出来。',c:[['替她挡下质疑','n4',25],['把真相藏起来','n5',0]],x:250,y:130},n3:{t:'第2章 误会',s:'沉默制造了距离，你必须在解释和离开之间选择。',c:[['追出去解释','n4',10],['独自离开','n6',0]],x:250,y:280},n4:{t:'第3章 坦白真相',s:'关键证据出现。本节点绑定付费规则，解锁后继续。',lock:true,c:[['公开证据','n7',30],['私下交易','n8',5]],x:450,y:210},n5:{t:'结局 迟来的告白',s:'你保住了秘密，却失去了重新开始的机会。',end:'遗憾结局',c:[],x:650,y:70},n6:{t:'结局 遗憾错过',s:'没有解释的离开，成为共同的遗憾。',end:'失败结局',c:[],x:650,y:230},n7:{t:'结局 真爱相守',s:'真相公开后，你们选择共同面对未来。',end:'完美结局',c:[],x:650,y:380},n8:{t:'结局 暗潮未散',s:'交易换来短暂平静，新的危机仍在靠近。',end:'开放结局',c:[],x:450,y:370}};
-const S={mode:'h5',view:'home',admin:'work',cur:'n1',visited:['n1'],history:[],endings:[],paid:false,trust:0,toast:'',review:'草稿',pub:15};
-const app=document.getElementById('app');
-const pct=()=>Math.round(S.visited.length/Object.keys(nodes).length*100);
-const n=id=>nodes[id];
-const go=v=>{S.view=v;render()};
-const say=t=>{S.toast=t;render();setTimeout(()=>{S.toast='';render()},1300)};
-function choose(i){const cur=n(S.cur),ch=cur.c[i],to=n(ch[1]);if(to.lock&&!S.paid){S.pending=ch[1];S.view='pay';render();return}S.history.push(cur.t+' → '+ch[0]);S.trust+=ch[2];S.cur=ch[1];if(!S.visited.includes(S.cur))S.visited.push(S.cur);if(to.end&&!S.endings.includes(S.cur))S.endings.push(S.cur);S.view=to.end?'ending':'player';say('已自动存档')}
-function pay(ok){if(!ok){say('支付失败，可重试或关闭');return}S.paid=true;S.cur=S.pending||'n4';if(!S.visited.includes(S.cur))S.visited.push(S.cur);S.view='player';say('支付成功，已解锁剧情')}
-function renderHeader(){return `<header class="topbar"><div class="brand"><div class="logo">剧</div><div><b>互动短剧游戏平台 Demo</b><span>命运的抉择 · MVP</span></div></div><div class="switch"><button class="${S.mode==='h5'?'on':''}" onclick="S.mode='h5';render()">H5 用户端</button><button class="${S.mode==='admin'?'on':''}" onclick="S.mode='admin';render()">配置后台</button></div><button class="btn" onclick="location.reload()">重置</button></header>`}
-function tabs(a){return `<nav class="tabs"><button class="${a==='home'?'on':''}" onclick="go('home')">首页</button><button class="${a==='detail'?'on':''}" onclick="go('detail')">剧目</button><button class="${a==='map'?'on':''}" onclick="go('map')">剧情图</button><button onclick="say('云端存档已同步')">我的</button></nav>`}
-function home(){return `<div class="page"><section class="hero"><h1>命运的抉择</h1><p>每一次选择都会改变关系、结局和付费路径。</p></section><section class="section"><div class="row"><h2>继续观看</h2><button class="btn" onclick="go('map')">剧情图</button></div><button class="card continue" onclick="go('player')"><div class="thumb"></div><div><b>${n(S.cur).t}</b><p class="muted">探索 ${S.visited.length}/8 · 进度 ${pct()}%</p></div></button></section><section class="section"><h2>热门推荐</h2><div class="cards">${['命运的抉择','逆光而行','心动法则'].map(x=>`<button onclick="go('detail')"><div class="poster"></div><div class="name">${x}</div><p class="muted">互动短剧</p></button>`).join('')}</div></section>${tabs('home')}</div>`}
-function detail(){return `<div class="page"><section class="hero"><h1>命运的抉择</h1><p>都市 · 爱情 · 互动</p></section><section class="section"><p>你意外获得一次改变命运的机会。面对误会、真相和利益交换，每一次选择都会把故事推向不同结局。</p><div class="kpis"><div class="kpi"><span class="muted">人在追</span><b>35.6万</b></div><div class="kpi"><span class="muted">互动率</span><b>68%</b></div><div class="kpi"><span class="muted">结局</span><b>${S.endings.length}/3</b></div><div class="kpi"><span class="muted">权益</span><b>${S.paid?'已解锁':'未解锁'}</b></div></div><button class="btn primary" style="width:100%;margin-top:16px" onclick="go('player')">${S.history.length?'继续剧情':'开始剧情'}</button></section>${tabs('detail')}</div>`}
-function player(){const cur=n(S.cur);if(cur.end)return ending();return `<div class="page"><section class="player"><div class="playerTop"><div class="row"><button class="btn" onclick="go('detail')">返回</button><button class="btn" onclick="go('map')">剧情图</button></div><p>当前进度 ${pct()}%</p></div><div class="playerBody"><div class="caption"><h1>${cur.t}</h1><p>${cur.s}</p></div></div><div class="choiceBox"><b>面对他的质问，你会如何回应？</b>${cur.c.map((c,i)=>`<button class="choice" onclick="choose(${i})">${c[0]}</button>`).join('')}<p class="muted">自动存档 · 信任值 ${S.trust}</p></div></section></div>`}
-function map(){return `<div class="map"><div class="row"><div><h1>剧情图</h1><p class="muted">探索 ${S.visited.length}/8 · 结局 ${S.endings.length}/3</p></div><button class="btn" onclick="go('player')">继续</button></div><div class="nodeGrid">${Object.keys(nodes).map(id=>{const x=n(id),v=S.visited.includes(id),l=x.lock&&!S.paid;return `<button class="node ${v?'visited':''} ${S.cur===id?'current':''} ${l?'locked':''}" onclick="${l?`S.pending='${id}';go('pay')`:`S.cur='${id}';go('${x.end?'ending':'player'}')`}">${l?'锁定':x.t}</button>`}).join('')}</div>${tabs('map')}</div>`}
-function payPage(){return `<div class="pay"><div class="payCard"><p class="muted">解锁本段剧情</p><h1>第3章 坦白真相</h1><p>解锁后可继续观看当前分支，并开放剧情图中的锁定节点。</p><div class="price">¥3.00</div><button class="btn primary" style="width:100%" onclick="pay(true)">模拟支付成功</button><button class="btn danger" style="width:100%;margin-top:10px" onclick="pay(false)">模拟支付失败</button><button class="btn" style="width:100%;margin-top:10px" onclick="go('player')">关闭返回</button></div></div>`}
-function ending(){const cur=n(S.cur);return `<div class="ending"><div class="endingCard"><p class="muted">已达成</p><h1>${cur.end||'剧情结局'}</h1><p>${cur.s}</p></div><button class="btn primary" onclick="go('map')">查看剧情图</button><button class="btn" onclick="S.cur='n1';go('player')">从头重玩</button></div>`}
-function side(){return `<aside class="side"><div class="panel"><div class="panelHead"><h2>页面间交互</h2><span class="pill">H5 MVP</span></div><div class="panelBody flow"><div><b>主观看链路</b><p class="muted">首页、详情、播放、结局反馈、剧情图已串联。</p></div><div><b>付费回流</b><p class="muted">锁定节点进入付费页，成功后返回剧情。</p></div><div><b>存档重玩</b><p class="muted">选择写入进度，剧情图支持继续和重玩。</p></div></div></div><div class="panel"><div class="panelHead"><h2>运行状态</h2><button class="btn" onclick="say('云端存档已同步')">登录同步</button></div><div class="panelBody"><div class="kpis"><div class="kpi"><span class="muted">当前节点</span><b>${n(S.cur).t.replace('第','')}</b></div><div class="kpi"><span class="muted">探索</span><b>${pct()}%</b></div><div class="kpi"><span class="muted">权益</span><b>${S.paid?'已解锁':'未解锁'}</b></div><div class="kpi"><span class="muted">信任</span><b>${S.trust}</b></div></div><h3>选择历史</h3>${S.history.length?`<table class="table">${S.history.slice(-5).map(x=>`<tr><td>${x}</td></tr>`).join('')}</table>`:'<p class="muted">暂无选择记录</p>'}</div></div></aside>`}
-function h5(){return `<main><section class="grid"><div class="phone"><div class="screen"><div class="status"><span>9:41</span><span>5G 100%</span></div>${S.view==='detail'?detail():S.view==='player'?player():S.view==='map'?map():S.view==='pay'?payPage():S.view==='ending'?ending():home()}</div></div>${side()}</section></main>`}
-function admin(){const nav=['work:项目工作台','overview:配置总览','editor:节点编辑器','review:审核发布','data:数据看板'];return `<main><section class="admin"><nav class="nav">${nav.map(x=>{let[a,b]=x.split(':');return `<button class="${S.admin===a?'on':''}" onclick="S.admin='${a}';render()">${b}</button>`}).join('')}</nav><div>${adminView()}</div></section></main>`}
-function adminView(){if(S.admin==='overview')return `<div class="panel"><div class="panelHead"><h2>配置总览</h2><button class="btn primary" onclick="say('草稿已保存')">保存草稿</button></div><div class="panelBody form"><div class="field"><label>剧目名称</label><input value="命运的抉择"></div><div class="field"><label>版本号</label><input value="v1.0.3"></div><div class="field full"><label>简介</label><textarea>每一次选择都会改变关系、结局和付费路径。</textarea></div><div class="field"><label>上线渠道</label><select><option>H5 正式渠道</option></select></div><div class="field"><label>合规字段</label><select><option>版权材料已上传</option></select></div></div></div>`;if(S.admin==='editor')return `<div class="panel"><div class="panelHead"><h2>节点编辑器</h2><button class="btn primary" onclick="S.mode='h5';S.view='detail';render()">H5 预览</button></div><div class="panelBody"><div class="canvas">${Object.keys(nodes).map(id=>`<button class="gNode ${S.cur===id?'active':''}" style="left:${n(id).x}px;top:${n(id).y}px" onclick="S.cur='${id}';render()"><b>${n(id).t}</b><span class="muted">${n(id).lock?'付费节点':n(id).end?'结局节点':'剧情节点'}</span></button>`).join('')}</div></div></div>`;if(S.admin==='review')return `<div class="panel"><div class="panelHead"><h2>审核与发布</h2><button class="btn primary" onclick="S.review='已发布';S.pub=100;say('已发布到 H5 正式渠道')">发布上线</button></div><div class="panelBody"><div class="kpis"><div class="kpi"><span class="muted">版本状态</span><b>${S.review}</b></div><div class="kpi"><span class="muted">灰度比例</span><b>${S.pub}%</b></div><div class="kpi"><span class="muted">校验项</span><b>5</b></div><div class="kpi"><span class="muted">可回滚</span><b>v1.0.2</b></div></div><table class="table"><tr><td>剧情起始节点</td><td><span class="pill">通过</span></td></tr><tr><td>付费规则</td><td><span class="pill">通过</span></td></tr><tr><td>灰度发布</td><td><span class="pill">警告</span></td></tr></table></div></div>`;if(S.admin==='data')return `<div class="panel"><div class="panelHead"><h2>数据看板</h2><button class="btn">导出</button></div><div class="panelBody">${[['首页曝光',100],['详情点击',72],['开始播放',61],['选择提交',48],['付费成功',18],['结局达成',12]].map(x=>`<p><b>${x[0]}</b></p><div class="bar"><i style="--w:${x[1]}%"></i></div>`).join('')}</div></div>`;return `<div class="panel"><div class="panelHead"><h2>项目工作台</h2><button class="btn primary" onclick="say('已创建空白草稿')">新建剧目</button></div><div class="panelBody"><div class="kpis"><div class="kpi"><span class="muted">草稿</span><b>3</b></div><div class="kpi"><span class="muted">待审核</span><b>0</b></div><div class="kpi"><span class="muted">已上线</span><b>1</b></div><div class="kpi"><span class="muted">阻断</span><b>0</b></div></div><table class="table"><tr><th>剧目</th><th>版本</th><th>状态</th><th>操作</th></tr><tr><td>命运的抉择</td><td>v1.0.3</td><td><span class="pill">已上线</span></td><td><button class="btn" onclick="S.admin='editor';render()">进入配置</button></td></tr></table></div></div>`}
-function render(){app.innerHTML=renderHeader()+(S.mode==='h5'?h5():admin())+(S.toast?`<div class="toast">${S.toast}</div>`:'')}render();
-</script>
+  <main class="portal">
+    <header class="portal-head">
+      <div>
+        <span class="eyebrow">Interactive Drama MVP</span>
+        <h1>互动短剧游戏平台</h1>
+        <p>用户端与配置后台已拆分为两个独立入口，打开链接后直接进入对应功能。</p>
+      </div>
+    </header>
+    <section class="entry-card">
+      <span class="eyebrow">用户端</span>
+      <h2>互动短剧小程序</h2>
+      <p>进入后直接播放、选择、解锁、查看剧情图和结局。</p>
+      <a href="./user/">打开用户端</a>
+    </section>
+    <section class="entry-card admin">
+      <span class="eyebrow">后台端</span>
+      <h2>配置管理后台</h2>
+      <p>进入后直接配置剧目、节点、素材、付费规则、审核发布和数据。</p>
+      <a href="./admin/">打开后台</a>
+    </section>
+  </main>
 </body>
 </html>
