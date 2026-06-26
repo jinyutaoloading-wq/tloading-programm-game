@@ -1,17 +1,53 @@
-const data = window.DRAMA_DATA;
+let data = window.getDramaConfig ? window.getDramaConfig() : window.DRAMA_DATA;
 const app = document.querySelector("#adminApp");
 
 const state = {
   tab: "workbench",
   selectedNode: "n4",
+  project: { ...data.project },
   nodes: data.nodes.map((node) => ({
     ...node,
+    video: { ...(node.video || {}) },
     choices: node.choices.map((choice) => ({ ...choice }))
   })),
+  metrics: { ...data.metrics },
   draftSavedAt: "23:58",
   grayPercent: 15,
   toast: ""
 };
+
+function escapeHtml(value = "") {
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+function buildConfig() {
+  return window.normalizeDramaConfig ? window.normalizeDramaConfig({
+    project: state.project,
+    nodes: state.nodes,
+    metrics: state.metrics
+  }) : {
+    project: state.project,
+    nodes: state.nodes,
+    metrics: state.metrics
+  };
+}
+
+function persistConfig() {
+  data = window.saveDramaConfig ? window.saveDramaConfig(buildConfig()) : buildConfig();
+  state.project = { ...data.project };
+  state.nodes = data.nodes.map((node) => ({
+    ...node,
+    video: { ...(node.video || {}) },
+    choices: node.choices.map((choice) => ({ ...choice }))
+  }));
+  state.metrics = { ...data.metrics };
+}
 
 function getNode(id = state.selectedNode) {
   return state.nodes.find((node) => node.id === id) || state.nodes[0];
@@ -73,8 +109,8 @@ function layout() {
     <section class="admin-main">
       <header class="admin-top">
         <div>
-          <p>${data.project.publishChannel} · ${data.project.version}</p>
-          <h1>${data.project.title}</h1>
+          <p>${escapeHtml(state.project.publishChannel)} · ${escapeHtml(state.project.version)}</p>
+          <h1>${escapeHtml(state.project.title)}</h1>
         </div>
         <div class="top-actions">
           <a class="secondary-button" href="../user/" target="_blank" rel="noreferrer">打开用户端</a>
@@ -121,13 +157,24 @@ function workbenchView() {
           <thead><tr><th>剧目</th><th>版本</th><th>状态</th><th>操作</th></tr></thead>
           <tbody>
             <tr>
-              <td><strong>${data.project.title}</strong><span>${data.project.subtitle}</span></td>
-              <td>${data.project.version}</td>
-              <td><span class="badge live">${data.project.status}</span></td>
+              <td><strong>${escapeHtml(state.project.title)}</strong><span>${escapeHtml(state.project.subtitle)}</span></td>
+              <td>${escapeHtml(state.project.version)}</td>
+              <td><span class="badge live">${escapeHtml(state.project.status)}</span></td>
               <td><button class="link-button" data-action="tab" data-tab="editor">进入配置</button></td>
             </tr>
           </tbody>
         </table>
+        <div class="project-form">
+          <label>剧目名称<input data-project-field="title" value="${escapeHtml(state.project.title)}"></label>
+          <label>副标题<input data-project-field="subtitle" value="${escapeHtml(state.project.subtitle)}"></label>
+          <label>版本号<input data-project-field="version" value="${escapeHtml(state.project.version)}"></label>
+          <label>付费价格<input type="number" min="0" step="0.01" data-project-field="price" value="${Number(state.project.price)}"></label>
+          <label>付费节点
+            <select data-project-field="unlockNode">
+              ${state.nodes.map((node) => `<option value="${node.id}" ${state.project.unlockNode === node.id ? "selected" : ""}>${escapeHtml(node.id)} · ${escapeHtml(node.title)}</option>`).join("")}
+            </select>
+          </label>
+        </div>
       </article>
 
       <article class="panel">
@@ -147,6 +194,7 @@ function workbenchView() {
 
 function editorView() {
   const selected = getNode();
+  const selectedVideo = selected.video || {};
   return `
     <section class="editor-layout">
       <article class="panel editor-panel">
@@ -173,8 +221,8 @@ function editorView() {
               style="left:${node.position.x}%;top:${node.position.y}%"
               data-action="select-node"
               data-node="${node.id}">
-              <small>${typeLabel(node.type)}</small>
-              <strong>${node.title}</strong>
+              <small>${typeLabel(node.type)}${node.video?.url ? " · 视频" : ""}</small>
+              <strong>${escapeHtml(node.title)}</strong>
               <span>${statusLabel(node.status)}</span>
             </button>
           `).join("")}
@@ -183,11 +231,11 @@ function editorView() {
 
       <aside class="panel property-panel">
         <div class="panel-head">
-          <div><h2>字段配置</h2><p>${selected.id} · ${typeLabel(selected.type)}</p></div>
+          <div><h2>字段配置</h2><p>${escapeHtml(selected.id)} · ${typeLabel(selected.type)}</p></div>
           <span class="badge ${selected.status === "published" ? "live" : "warn"}">${statusLabel(selected.status)}</span>
         </div>
         <form class="field-form">
-          <label>节点标题<input data-field="title" value="${selected.title}"></label>
+          <label>节点标题<input data-field="title" value="${escapeHtml(selected.title)}"></label>
           <label>节点类型
             <select data-field="type">
               ${["story", "paid", "ending"].map((type) => `<option value="${type}" ${selected.type === type ? "selected" : ""}>${typeLabel(type)}</option>`).join("")}
@@ -198,16 +246,34 @@ function editorView() {
               ${["published", "draft", "review"].map((status) => `<option value="${status}" ${selected.status === status ? "selected" : ""}>${statusLabel(status)}</option>`).join("")}
             </select>
           </label>
-          <label>视频时长<input data-field="duration" value="${selected.duration}"></label>
-          <label class="full">剧情说明<textarea data-field="summary">${selected.summary}</textarea></label>
+          <label>视频时长<input data-field="duration" value="${escapeHtml(selected.duration)}"></label>
+          <label class="full">剧情说明<textarea data-field="summary">${escapeHtml(selected.summary)}</textarea></label>
+          <div class="field-divider full">视频配置</div>
+          <label class="full">视频地址<input data-video-field="url" value="${escapeHtml(selectedVideo.url || "")}" placeholder="https://cdn.example.com/video.mp4"></label>
+          <label class="full">视频封面<input data-video-field="poster" value="${escapeHtml(selectedVideo.poster || "")}" placeholder="https://cdn.example.com/poster.jpg"></label>
+          <label>视频来源
+            <select data-video-field="sourceType">
+              ${[["cdn", "CDN 地址"], ["upload", "上传素材"], ["external", "外部链接"]].map(([value, label]) => `<option value="${value}" ${selectedVideo.sourceType === value ? "selected" : ""}>${label}</option>`).join("")}
+            </select>
+          </label>
+          <label>播放方式
+            <select data-video-field="playMode">
+              ${[["manual", "手动播放"], ["muted", "默认静音"], ["autoplay", "自动静音播放"]].map(([value, label]) => `<option value="${value}" ${selectedVideo.playMode === value ? "selected" : ""}>${label}</option>`).join("")}
+            </select>
+          </label>
         </form>
         <div class="choice-config">
           <h3>选择分支</h3>
           ${selected.choices.length ? selected.choices.map((choice, index) => `
-            <div class="choice-row">
+            <div class="choice-row editable-choice">
               <span>${index + 1}</span>
-              <strong>${choice.label}</strong>
-              <small>跳转 ${choice.target} · 信任 ${choice.trust >= 0 ? "+" : ""}${choice.trust}</small>
+              <label>按钮文案<input data-choice-index="${index}" data-choice-field="label" value="${escapeHtml(choice.label)}"></label>
+              <label>跳转节点
+                <select data-choice-index="${index}" data-choice-field="target">
+                  ${state.nodes.map((node) => `<option value="${node.id}" ${choice.target === node.id ? "selected" : ""}>${escapeHtml(node.id)} · ${escapeHtml(node.title)}</option>`).join("")}
+                </select>
+              </label>
+              <label>信任值<input type="number" data-choice-index="${index}" data-choice-field="trust" value="${Number(choice.trust || 0)}"></label>
             </div>
           `).join("") : "<p class=\"muted\">结局节点无后续分支</p>"}
         </div>
@@ -247,7 +313,7 @@ function assetsView() {
 }
 
 function rulesView() {
-  const paidNode = state.nodes.find((node) => node.type === "paid");
+  const paidNode = state.nodes.find((node) => node.id === state.project.unlockNode) || state.nodes.find((node) => node.type === "paid") || state.nodes[0];
   return `
     <section class="two-col">
       <article class="panel">
@@ -256,8 +322,12 @@ function rulesView() {
           <span class="badge live">启用</span>
         </div>
         <div class="rule-card">
-          <label>解锁节点<input value="${paidNode.title}"></label>
-          <label>价格<input value="¥${data.project.price.toFixed(2)}"></label>
+          <label>解锁节点
+            <select data-project-field="unlockNode">
+              ${state.nodes.map((node) => `<option value="${node.id}" ${paidNode.id === node.id ? "selected" : ""}>${escapeHtml(node.id)} · ${escapeHtml(node.title)}</option>`).join("")}
+            </select>
+          </label>
+          <label>价格<input type="number" min="0" step="0.01" data-project-field="price" value="${Number(state.project.price)}"></label>
           <label>权益范围<select><option>当前节点及后续主线</option></select></label>
           <label>失败回流<select><option>返回播放页并保留进度</option></select></label>
         </div>
@@ -271,7 +341,7 @@ function rulesView() {
           <thead><tr><th>起点</th><th>选择</th><th>目标</th><th>变量</th></tr></thead>
           <tbody>
             ${state.nodes.flatMap((node) => node.choices.map((choice) => `
-              <tr><td>${node.id}</td><td>${choice.label}</td><td>${choice.target}</td><td>trust ${choice.trust >= 0 ? "+" : ""}${choice.trust}</td></tr>
+              <tr><td>${escapeHtml(node.id)}</td><td>${escapeHtml(choice.label)}</td><td>${escapeHtml(choice.target)}</td><td>trust ${choice.trust >= 0 ? "+" : ""}${Number(choice.trust || 0)}</td></tr>
             `)).join("")}
           </tbody>
         </table>
@@ -304,7 +374,7 @@ function publishView() {
       <article class="panel">
         <div class="panel-head">
           <div><h2>发布控制</h2><p>灰度上线后可随时回滚</p></div>
-          <span class="badge live">${data.project.status}</span>
+          <span class="badge live">${escapeHtml(state.project.status)}</span>
         </div>
         <div class="release-box">
           <label>灰度比例 <output>${state.grayPercent}%</output><input type="range" min="1" max="100" value="${state.grayPercent}" data-field="grayPercent"></label>
@@ -319,11 +389,11 @@ function publishView() {
 function analyticsView() {
   const funnel = [
     ["首页曝光", 100],
-    ["详情点击", data.metrics.playRate],
+    ["详情点击", state.metrics.playRate],
     ["开始播放", 54.2],
-    ["选择提交", data.metrics.choiceRate],
-    ["付费成功", data.metrics.payRate],
-    ["结局达成", data.metrics.completionRate]
+    ["选择提交", state.metrics.choiceRate],
+    ["付费成功", state.metrics.payRate],
+    ["结局达成", state.metrics.completionRate]
   ];
   return `
     <section class="two-col analytics-layout">
@@ -351,7 +421,7 @@ function analyticsView() {
           <tbody>
             ${state.nodes.slice(0, 6).map((node, index) => `
               <tr>
-                <td>${node.title}</td>
+                <td>${escapeHtml(node.title)}</td>
                 <td>${Math.max(14, 86 - index * 11)}%</td>
                 <td>${node.choices.length ? `${Math.max(18, 68 - index * 7)}%` : "-"}</td>
                 <td><span class="badge ${node.status === "published" ? "live" : "warn"}">${statusLabel(node.status)}</span></td>
@@ -382,15 +452,45 @@ app.addEventListener("click", (event) => {
   }
   if (action === "save") {
     state.draftSavedAt = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
-    showToast(`草稿已保存 ${state.draftSavedAt}`);
+    persistConfig();
+    showToast(`配置已保存 ${state.draftSavedAt}，前台刷新生效`);
   }
-  if (action === "publish") showToast("已提交发布，灰度配置生效");
+  if (action === "publish") {
+    persistConfig();
+    showToast("已提交发布，灰度配置生效");
+  }
   if (action === "rollback") showToast("已回滚到上一稳定版本");
   if (action === "export") showToast("数据报表已生成");
   if (action === "new-project") showToast("已创建空白剧目草稿");
 });
 
 app.addEventListener("input", (event) => {
+  const projectField = event.target.dataset.projectField;
+  if (projectField) {
+    state.project[projectField] = projectField === "price" ? Number(event.target.value || 0) : event.target.value;
+    return;
+  }
+
+  const videoField = event.target.dataset.videoField;
+  if (videoField) {
+    const selected = getNode();
+    selected.video = {
+      ...(selected.video || {}),
+      [videoField]: event.target.value
+    };
+    return;
+  }
+
+  const choiceIndex = event.target.dataset.choiceIndex;
+  const choiceField = event.target.dataset.choiceField;
+  if (choiceIndex !== undefined && choiceField) {
+    const selected = getNode();
+    const choice = selected.choices[Number(choiceIndex)];
+    if (!choice) return;
+    choice[choiceField] = choiceField === "trust" ? Number(event.target.value || 0) : event.target.value;
+    return;
+  }
+
   const field = event.target.dataset.field;
   if (!field) return;
   if (field === "grayPercent") {
