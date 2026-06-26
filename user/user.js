@@ -1,5 +1,5 @@
-const data = window.DRAMA_DATA;
-const nodes = data.nodes;
+let data = window.getDramaConfig ? window.getDramaConfig() : window.DRAMA_DATA;
+let nodes = data.nodes;
 const app = document.querySelector("#app");
 
 const state = {
@@ -14,6 +14,38 @@ const state = {
   pendingNode: null
 };
 
+function escapeHtml(value = "") {
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+function safeMediaUrl(value = "", kind = "video") {
+  const url = String(value).trim();
+  if (!url) return "";
+  if (kind === "video" && url.startsWith("data:video/")) return url;
+  if (kind === "image" && url.startsWith("data:image/")) return url;
+  try {
+    const parsed = new URL(url, window.location.href);
+    return ["http:", "https:", "blob:"].includes(parsed.protocol) ? parsed.href : "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function applyConfig(nextConfig) {
+  data = window.normalizeDramaConfig ? window.normalizeDramaConfig(nextConfig) : nextConfig;
+  nodes = data.nodes;
+  if (!nodes.some((node) => node.id === state.current)) {
+    state.current = nodes[0]?.id || "";
+    state.visited = state.current ? [state.current] : [];
+  }
+}
+
 function getNode(id = state.current) {
   return nodes.find((node) => node.id === id) || nodes[0];
 }
@@ -24,7 +56,7 @@ function setView(view) {
 }
 
 function progress() {
-  return Math.round((state.visited.length / nodes.length) * 100);
+  return nodes.length ? Math.round((state.visited.length / nodes.length) * 100) : 0;
 }
 
 function showToast(message) {
@@ -98,12 +130,35 @@ function resetRun() {
   showToast("进度已重置");
 }
 
+function hasPlayableVideo(node) {
+  return Boolean(safeMediaUrl(node?.video?.url));
+}
+
+function renderNodeVideo(node) {
+  const videoUrl = safeMediaUrl(node?.video?.url);
+  if (!videoUrl) return "";
+  const posterUrl = safeMediaUrl(node?.video?.poster, "image");
+  const playMode = node?.video?.playMode || "manual";
+  const autoAttrs = playMode === "autoplay" ? " autoplay muted loop" : "";
+  const mutedAttr = playMode === "muted" ? " muted" : "";
+  return `
+    <video
+      class="node-video"
+      src="${escapeHtml(videoUrl)}"
+      ${posterUrl ? `poster="${escapeHtml(posterUrl)}"` : ""}
+      controls
+      playsinline
+      preload="metadata"${autoAttrs}${mutedAttr}>
+    </video>
+  `;
+}
+
 function statusBar() {
   return `
     <header class="mini-top">
       <div>
         <span class="mini-time">9:41</span>
-        <strong>${data.project.title}</strong>
+        <strong>${escapeHtml(data.project.title)}</strong>
       </div>
       <button class="icon-button" data-action="reset" aria-label="重置进度">↻</button>
     </header>
@@ -136,8 +191,8 @@ function homeView() {
     <section class="hero-card">
       <div class="hero-cover"></div>
       <div class="hero-copy">
-        <span class="eyebrow">${data.project.subtitle}</span>
-        <h1>${data.project.title}</h1>
+        <span class="eyebrow">${escapeHtml(data.project.subtitle)}</span>
+        <h1>${escapeHtml(data.project.title)}</h1>
         <p>每一次选择都会改变信任值、剧情路线和结局收集。</p>
         <div class="hero-actions">
           <button class="primary-action" data-action="start">继续观看</button>
@@ -154,8 +209,8 @@ function homeView() {
       <button class="continue-card" data-action="start">
         <div class="continue-thumb"></div>
         <div>
-          <strong>${current.title}</strong>
-          <p>${current.summary}</p>
+          <strong>${escapeHtml(current.title)}</strong>
+          <p>${escapeHtml(current.summary)}</p>
           <small>已探索 ${state.visited.length}/${nodes.length} · 信任值 ${state.trust}</small>
         </div>
       </button>
@@ -170,7 +225,7 @@ function homeView() {
         ${nodes.filter((node) => node.type !== "ending").slice(0, 4).map((node) => `
           <button class="mini-card" data-action="node" data-node="${node.id}">
             <span class="mini-card-poster"></span>
-            <strong>${node.title}</strong>
+            <strong>${escapeHtml(node.title)}</strong>
             <small>${node.type === "paid" ? "付费节点" : "剧情节点"}</small>
           </button>
         `).join("")}
@@ -187,7 +242,8 @@ function playerView() {
   return `
     ${statusBar()}
     <section class="player-page">
-      <div class="player-media">
+      <div class="player-media ${hasPlayableVideo(node) ? "has-video" : ""}">
+        ${renderNodeVideo(node)}
         <div class="player-controls">
           <button class="ghost-on-dark" data-action="view" data-view="home">返回</button>
           <button class="ghost-on-dark" data-action="view" data-view="map">剧情图</button>
@@ -196,16 +252,16 @@ function playerView() {
           <span style="width:${progress()}%"></span>
         </div>
         <div class="caption-panel">
-          <span class="eyebrow">${node.duration} · ${node.type === "paid" ? "已解锁" : "互动剧情"}</span>
-          <h1>${node.title}</h1>
-          <p>${node.summary}</p>
+          <span class="eyebrow">${escapeHtml(node.duration)} · ${hasPlayableVideo(node) ? "视频节点" : "未配视频"} · ${node.type === "paid" ? "已解锁" : "互动剧情"}</span>
+          <h1>${escapeHtml(node.title)}</h1>
+          <p>${escapeHtml(node.summary)}</p>
         </div>
       </div>
       <div class="choice-panel">
         <strong>你会如何选择？</strong>
         ${node.choices.map((choice, index) => `
           <button class="choice-button" data-action="choice" data-index="${index}">
-            <span>${choice.label}</span>
+            <span>${escapeHtml(choice.label)}</span>
             <small>${choice.trust >= 0 ? "+" : ""}${choice.trust} 信任</small>
           </button>
         `).join("")}
@@ -239,7 +295,7 @@ function mapView() {
               data-action="node"
               data-node="${node.id}">
               <small>${isLocked ? "待解锁" : node.type}</small>
-              <strong>${node.title.replace("第", "")}</strong>
+              <strong>${escapeHtml(node.title.replace("第", ""))}</strong>
             </button>
           `;
         }).join("")}
@@ -264,8 +320,8 @@ function payView() {
     <section class="pay-page">
       <div class="pay-card">
         <span class="eyebrow">付费节点</span>
-        <h1>${node.title}</h1>
-        <p>${node.summary}</p>
+        <h1>${escapeHtml(node.title)}</h1>
+        <p>${escapeHtml(node.summary)}</p>
         <div class="price">¥${data.project.price.toFixed(2)}</div>
         <button class="primary-action" data-action="pay-ok">模拟支付成功</button>
         <button class="danger-action" data-action="pay-fail">模拟支付失败</button>
@@ -282,8 +338,8 @@ function endingView() {
     <section class="ending-page">
       <div class="ending-card">
         <span class="eyebrow">已达成结局</span>
-        <h1>${node.ending}</h1>
-        <p>${node.summary}</p>
+        <h1>${escapeHtml(node.ending)}</h1>
+        <p>${escapeHtml(node.summary)}</p>
         <dl>
           <div><dt>信任值</dt><dd>${state.trust}</dd></div>
           <div><dt>探索进度</dt><dd>${progress()}%</dd></div>
@@ -316,8 +372,8 @@ function profileView() {
         <h2>最近选择</h2>
         ${state.history.length ? state.history.slice(-5).reverse().map((item) => `
           <article>
-            <strong>${item.from}</strong>
-            <p>${item.choice} → ${item.to}</p>
+            <strong>${escapeHtml(item.from)}</strong>
+            <p>${escapeHtml(item.choice)} → ${escapeHtml(item.to)}</p>
           </article>
         `).join("") : "<p class=\"support-text\">暂无选择记录</p>"}
       </div>
@@ -370,3 +426,10 @@ app.addEventListener("click", (event) => {
 });
 
 render();
+
+window.addEventListener("storage", (event) => {
+  if (event.key !== window.DRAMA_CONFIG_KEY) return;
+  applyConfig(window.getDramaConfig ? window.getDramaConfig() : window.DRAMA_DATA);
+  render();
+  showToast("后台配置已同步");
+});
