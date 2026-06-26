@@ -224,6 +224,32 @@
   font-size: 12px;
 }
 
+.project-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.project-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.project-form input,
+.project-form select {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: #fff;
+  color: var(--ink);
+}
+
 .check-list {
   display: grid;
   gap: 10px;
@@ -385,6 +411,10 @@
   padding: 18px;
 }
 
+.field-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .field-form label,
 .rule-card label,
 .release-box label {
@@ -413,6 +443,19 @@
   resize: vertical;
 }
 
+.field-form .full,
+.field-divider {
+  grid-column: 1 / -1;
+}
+
+.field-divider {
+  padding-top: 6px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  border-top: 1px solid var(--line);
+}
+
 .choice-config {
   padding: 0 18px 18px;
 }
@@ -428,6 +471,11 @@
   gap: 8px;
   padding: 10px 0;
   border-top: 1px solid var(--line);
+}
+
+.choice-row.editable-choice {
+  grid-template-columns: 24px minmax(130px, 1fr);
+  align-items: start;
 }
 
 .choice-row span {
@@ -449,6 +497,24 @@
 
 .choice-row small {
   color: var(--muted);
+}
+
+.choice-row label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.choice-row input,
+.choice-row select {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 9px;
+  background: #fff;
+  color: var(--ink);
 }
 
 .asset-grid {
@@ -618,7 +684,9 @@
   }
 
   .kpi-grid,
-  .asset-grid {
+  .asset-grid,
+  .project-form,
+  .field-form {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -629,5 +697,17 @@
 
   .admin-node {
     width: 120px;
+  }
+}
+
+@media (max-width: 520px) {
+  .project-form,
+  .field-form,
+  .choice-row.editable-choice {
+    grid-template-columns: 1fr;
+  }
+
+  .choice-row span {
+    justify-self: start;
   }
 }
