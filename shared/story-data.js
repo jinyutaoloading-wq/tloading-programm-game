@@ -1,3 +1,5 @@
+window.DRAMA_CONFIG_KEY = "interactive-drama-config:v1";
+
 window.DRAMA_DATA = {
   project: {
     id: "drama-fate-choice",
@@ -116,3 +118,90 @@ window.DRAMA_DATA = {
     revenue: 84260
   }
 };
+
+(function setupDramaConfigStore() {
+  const defaultVideo = {
+    url: "",
+    poster: "",
+    sourceType: "cdn",
+    playMode: "manual"
+  };
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function normalizeChoice(choice) {
+    return {
+      label: choice?.label || "",
+      target: choice?.target || "",
+      trust: Number(choice?.trust || 0)
+    };
+  }
+
+  function normalizeNode(node, fallback) {
+    return {
+      ...fallback,
+      ...node,
+      choices: Array.isArray(node?.choices) ? node.choices.map(normalizeChoice) : [],
+      position: {
+        x: Number(node?.position?.x ?? fallback?.position?.x ?? 12),
+        y: Number(node?.position?.y ?? fallback?.position?.y ?? 50)
+      },
+      video: {
+        ...defaultVideo,
+        ...(node?.video || {})
+      }
+    };
+  }
+
+  function normalizeConfig(config) {
+    const base = clone(window.DRAMA_DEFAULT_DATA || window.DRAMA_DATA);
+    const source = config || base;
+    const fallbackById = new Map(base.nodes.map((node) => [node.id, node]));
+    const sourceNodes = Array.isArray(source.nodes) && source.nodes.length ? source.nodes : base.nodes;
+
+    return {
+      project: {
+        ...base.project,
+        ...(source.project || {}),
+        price: Number(source.project?.price ?? base.project.price)
+      },
+      nodes: sourceNodes.map((node) => normalizeNode(node, fallbackById.get(node.id) || base.nodes[0])),
+      metrics: {
+        ...base.metrics,
+        ...(source.metrics || {})
+      },
+      updatedAt: source.updatedAt || ""
+    };
+  }
+
+  function readStoredConfig() {
+    try {
+      const raw = window.localStorage?.getItem(window.DRAMA_CONFIG_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  window.DRAMA_DEFAULT_DATA = normalizeConfig(window.DRAMA_DATA);
+  window.cloneDramaConfig = clone;
+  window.normalizeDramaConfig = normalizeConfig;
+  window.getDramaConfig = function getDramaConfig() {
+    return normalizeConfig(readStoredConfig() || window.DRAMA_DEFAULT_DATA);
+  };
+  window.saveDramaConfig = function saveDramaConfig(config) {
+    const normalized = normalizeConfig({
+      ...config,
+      updatedAt: new Date().toISOString()
+    });
+    window.localStorage?.setItem(window.DRAMA_CONFIG_KEY, JSON.stringify(normalized));
+    return normalized;
+  };
+  window.resetDramaConfig = function resetDramaConfig() {
+    window.localStorage?.removeItem(window.DRAMA_CONFIG_KEY);
+    return normalizeConfig(window.DRAMA_DEFAULT_DATA);
+  };
+  window.DRAMA_DATA = window.getDramaConfig();
+})();
