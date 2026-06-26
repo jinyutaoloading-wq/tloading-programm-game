@@ -1,1 +1,1 @@
-GitHub Pages deploy trigger: 2026-06-27 config-video refresh CST
+GitHub Pages deploy trigger: 2026-06-27 cache-busted config-video refresh CST
