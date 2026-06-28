@@ -2,9 +2,9 @@ window.DRAMA_CONFIG_KEY = "interactive-drama-config:v1";
 
 window.DRAMA_DATA = {
   project: {
-    id: "drama-fate-choice",
-    title: "命运的抉择",
-    subtitle: "都市悬疑互动短剧",
+    id: "drama-abyss-echo",
+    title: "深渊回响",
+    subtitle: "都市悬疑互动剧",
     version: "v1.2.0",
     status: "灰度中",
     publishChannel: "H5 / 小程序双端",
