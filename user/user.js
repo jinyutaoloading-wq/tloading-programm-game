@@ -473,14 +473,28 @@ function tagsHtml(tags) {
   return tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
 }
 
+function cleanNodeTitle(title = "") {
+  return String(title).replace(/^第\d+章\s*/, "").replace(/^第\d+集\s*/, "");
+}
+
+function progressMarkup(value) {
+  const safeValue = Math.max(0, Math.min(100, Number(value) || 0));
+  return `<span class="progress-track"><span style="width:${safeValue}%"></span></span>`;
+}
+
 function dramaCard(drama, compact = false) {
   return `
     <button class="drama-card ${compact ? "is-compact" : ""}" data-action="drama" data-drama="${drama.id}">
-      <span class="poster-surface ${drama.coverClass}"></span>
+      <span class="poster-wrap">
+        <span class="poster-surface ${drama.coverClass}"></span>
+        ${compact ? "" : `<span class="card-badge">${escapeHtml(drama.status)}</span>`}
+        ${compact ? "" : "<span class=\"branch-dot\" aria-hidden=\"true\"></span>"}
+      </span>
       <span class="drama-info">
         <strong>${escapeHtml(drama.title)}</strong>
         <small>${escapeHtml(drama.subtitle)}</small>
         <span class="mini-tags">${tagsHtml(drama.tags.slice(0, 2))}</span>
+        ${compact ? "" : `<span class="update-line">已更新至 ${getDramaNodes(drama).length} 节点</span>`}
       </span>
     </button>
   `;
@@ -489,55 +503,62 @@ function dramaCard(drama, compact = false) {
 function homeView() {
   const dramas = getDramas();
   const featured = dramas[0];
-  const continueList = dramas.filter((drama) => getVisited(drama).length > 1 || drama.id === state.activeDramaId).slice(0, 3);
+  const continueList = dramas.slice(0, 3);
   return `
-    ${statusBar("互动剧场")}
-    <section class="catalog-page">
-      <div class="catalog-head">
-        <div>
-          <span class="eyebrow">Interactive Drama</span>
-          <h1>选择一部剧，进入你的剧情线</h1>
-        </div>
-        <button class="profile-chip" data-action="view" data-view="profile">我的</button>
+    <section class="catalog-page catalog-home">
+      <div class="catalog-toolbar">
+        <label class="search-box">
+          <span class="search-icon"></span>
+          <input type="search" placeholder="搜索剧名 / 标签 / 剧情关键词" aria-label="搜索剧集">
+        </label>
+        <button class="wallet-chip" data-action="view" data-view="profile" aria-label="查看余额">
+          <span class="coin-icon">S</span>
+          <strong>120</strong>
+          <em>充值</em>
+        </button>
       </div>
-
-      <label class="search-box">
-        <span class="search-icon"></span>
-        <input type="search" placeholder="搜索剧名、题材、角色" aria-label="搜索剧集">
-      </label>
 
       <div class="category-row" aria-label="题材筛选">
         <button class="is-active">推荐</button>
         <button>悬疑</button>
+        <button>恋爱</button>
         <button>古风</button>
         <button>科幻</button>
+        <button>逆袭</button>
+        <button>成长</button>
         <button>都市</button>
       </div>
 
       <button class="feature-card ${featured.coverClass}" data-action="drama" data-drama="${featured.id}">
         <span class="feature-media"></span>
+        <span class="feature-badge">热门推荐</span>
         <span class="feature-copy">
-          <span class="badge live">${escapeHtml(featured.status)}</span>
           <strong>${escapeHtml(featured.title)}</strong>
-          <small>${escapeHtml(featured.desc)}</small>
-          <span class="feature-metrics">${escapeHtml(featured.heat)}热度 · ${progress(featured)}%探索 · ${getDramaNodes(featured).length}节点</span>
+          <small>你的选择，决定真相与结局</small>
+          <span class="mini-tags">${tagsHtml(featured.tags.slice(0, 3))}</span>
+          <span class="feature-cta"><span class="play-mini"></span>开始体验</span>
+          <span class="hero-dots" aria-hidden="true"><i></i><i class="is-active"></i><i></i><i></i><i></i></span>
         </span>
       </button>
 
       <section class="content-section">
         <div class="section-title">
-          <h2>继续观看</h2>
-          <span>${continueList.length}部</span>
+          <h2><span class="title-icon play-title"></span>继续观看</h2>
+          <span>查看全部</span>
         </div>
         <div class="continue-strip">
           ${continueList.map((drama) => {
             const current = getCurrentNode(drama);
+            const watched = progress(drama);
             return `
               <button class="continue-card" data-action="drama" data-drama="${drama.id}">
                 <span class="poster-surface ${drama.coverClass}"></span>
-                <span>
+                <span class="float-play"></span>
+                <span class="continue-copy">
                   <strong>${escapeHtml(drama.title)}</strong>
-                  <small>${escapeHtml(current?.title || "未开始")} · ${progress(drama)}%</small>
+                  <small>${escapeHtml(cleanNodeTitle(current?.title || "未开始"))}</small>
+                  ${progressMarkup(watched)}
+                  <small>已观看 ${watched}%</small>
                 </span>
               </button>
             `;
@@ -547,8 +568,8 @@ function homeView() {
 
       <section class="content-section">
         <div class="section-title">
-          <h2>热门互动剧</h2>
-          <span>共${dramas.length}部</span>
+          <h2><span class="title-icon fire-title"></span>热门互动剧</h2>
+          <span>更多</span>
         </div>
         <div class="drama-grid">
           ${dramas.map((drama) => dramaCard(drama)).join("")}
@@ -564,66 +585,105 @@ function detailView() {
   const current = getCurrentNode(drama);
   const dramaNodes = getDramaNodes(drama);
   const endings = dramaNodes.filter((node) => node.type === "ending");
+  const watched = progress(drama);
+  const recentChoices = current?.choices || [];
 
   return `
-    ${statusBar(drama.title, "home")}
     <section class="detail-page">
       <div class="detail-hero ${drama.coverClass}">
-        <div class="detail-hero-actions">
-          <button class="ghost-on-dark" data-action="view" data-view="home">返回首页</button>
-          <button class="ghost-on-dark" data-action="view" data-view="map">剧情线</button>
+        <div class="detail-topbar">
+          <button class="detail-icon icon-back" data-action="view" data-view="home" aria-label="返回首页"></button>
+          <div class="detail-top-actions">
+            <button class="detail-tool" type="button"><span>♡</span>追剧</button>
+            <button class="detail-tool" type="button"><span>↗</span>分享</button>
+          </div>
+        </div>
+        <button class="hero-play" data-action="start" aria-label="开始观看"><span></span></button>
+        <button class="ending-hint" data-action="view" data-view="map">
+          <span class="branch-mark"></span>
+          <strong>多结局</strong>
+          <small>选择会改变结局</small>
+        </button>
+        <div class="hero-watch">
+          <span>已看到 <strong>${watched}%</strong></span>
+          ${progressMarkup(watched)}
         </div>
       </div>
       <div class="detail-body">
         <div class="detail-title">
           <div>
-            <span class="eyebrow">${escapeHtml(drama.subtitle)}</span>
             <h1>${escapeHtml(drama.title)}</h1>
+            <div class="tag-list">${tagsHtml(drama.tags)}</div>
           </div>
-          <span class="score">${escapeHtml(drama.score)}</span>
+          <span class="score"><strong>${escapeHtml(drama.score)}</strong><small>12.4万人评分</small></span>
         </div>
         <p class="detail-desc">${escapeHtml(drama.desc)}</p>
-        <div class="tag-list">${tagsHtml(drama.tags)}</div>
-
-        <div class="metric-row">
-          <div><strong>${escapeHtml(drama.heat)}</strong><span>热度</span></div>
-          <div><strong>${progress(drama)}%</strong><span>探索</span></div>
-          <div><strong>${getEndings(drama).length}/${endings.length}</strong><span>结局</span></div>
-        </div>
+        <p class="detail-meta">🔥 已更新至 第${Math.min(8, dramaNodes.length)}集 ｜ 共${dramaNodes.length * 3}集</p>
 
         <div class="detail-actions">
-          <button class="primary-action" data-action="start">${progress(drama) > 13 ? "继续观看" : "开始观看"}</button>
-          <button class="secondary-button" data-action="view" data-view="map">看剧情线</button>
+          <button class="primary-action watch-action" data-action="start"><span class="play-large"></span><strong>${watched > 13 ? "继续观看" : "开始观看"}</strong><small>${escapeHtml(cleanNodeTitle(current?.title || "第1集"))}</small></button>
+          <button class="secondary-button map-action" data-action="view" data-view="map"><span class="branch-mark"></span><strong>剧情线</strong><small>探索全部分支</small></button>
         </div>
-
-        <section class="now-card">
-          <span class="poster-surface ${drama.coverClass}"></span>
-          <div>
-            <small>当前节点</small>
-            <strong>${escapeHtml(current?.title || "未开始")}</strong>
-            <p>${escapeHtml(current?.summary || "")}</p>
-          </div>
-        </section>
 
         <section class="episode-section">
           <div class="section-title">
-            <h2>剧情节点</h2>
-            <span>${getVisited(drama).length}/${dramaNodes.length}</span>
+            <h2>选集</h2>
+            <span>顺序⌄</span>
           </div>
-          <div class="episode-list">
+          <div class="episode-list episode-rail">
             ${dramaNodes.map((node) => {
               const visited = getVisited(drama).includes(node.id);
               const locked = node.type === "paid" && !isPaid(drama);
               const currentNode = current?.id === node.id;
               return `
                 <button class="episode-item ${visited ? "is-visited" : ""} ${locked ? "is-locked" : ""} ${currentNode ? "is-current" : ""}" data-action="node" data-node="${node.id}">
-                  <span>${escapeHtml(node.title)}</span>
-                  <small>${locked ? "付费解锁" : hasPlayableVideo(node) ? "视频" : node.type === "ending" ? "结局" : node.duration}</small>
+                  <span>${escapeHtml(cleanNodeTitle(node.title))}</span>
+                  <small>${locked ? "付费" : hasPlayableVideo(node) ? "视频" : node.type === "ending" ? "结局" : node.duration}</small>
                 </button>
               `;
             }).join("")}
+            <button class="episode-item all-episodes" type="button"><span>全部选集</span><small>${dramaNodes.length}节点</small></button>
           </div>
         </section>
+
+        <section class="now-card">
+          <span class="poster-surface ${drama.coverClass}"></span>
+          <div class="now-copy">
+            <small>当前节点</small>
+            <strong>${escapeHtml(current?.title || "未开始")}</strong>
+            <p>${escapeHtml(current?.summary || "")}</p>
+            <span class="trust-pill">信任值 +5</span>
+          </div>
+          <div class="unlock-panel">
+            <small>${current?.type === "paid" && !isPaid(drama) ? "付费节点" : "已解锁"}</small>
+            <button class="unlock-button" data-action="${current?.type === "paid" && !isPaid(drama) ? "node" : "start"}" ${current?.id ? `data-node="${current.id}"` : ""}>${current?.type === "paid" && !isPaid(drama) ? `解锁 ¥${Number(drama.price || 0).toFixed(0)}` : "观看本节"}</button>
+          </div>
+        </section>
+
+        <section class="choice-preview">
+          <div class="section-title">
+            <h2>最近选择</h2>
+            <span>查看全部</span>
+          </div>
+          <div class="choice-preview-grid">
+            ${recentChoices.slice(0, 2).map((choice, index) => `
+              <button class="choice-preview-card ${index === 0 ? "is-picked" : ""}" data-action="choice" data-index="${index}">
+                <strong>${escapeHtml(choice.label)}</strong>
+                <small>信任值 ${choice.trust >= 0 ? "+" : ""}${choice.trust}</small>
+                ${progressMarkup(index === 0 ? 43 : 57)}
+              </button>
+            `).join("")}
+          </div>
+        </section>
+      </div>
+      <div class="detail-dock">
+        <span class="poster-surface ${drama.coverClass}"></span>
+        <span class="dock-copy">
+          <strong>继续观看：${escapeHtml(cleanNodeTitle(current?.title || "第1集"))}</strong>
+          <small>已看到 ${watched}%</small>
+          ${progressMarkup(watched)}
+        </span>
+        <button class="dock-button" data-action="start">继续观看 <span class="play-mini"></span></button>
       </div>
     </section>
     ${bottomTabs("home")}
@@ -636,7 +696,6 @@ function playerView() {
   if (node?.type === "ending") return endingView();
 
   return `
-    ${statusBar(drama.title, "detail")}
     <section class="player-page">
       <div class="player-media ${drama.coverClass} ${hasPlayableVideo(node) ? "has-video" : ""}">
         ${renderNodeVideo(node)}
@@ -672,31 +731,37 @@ function mapView() {
   const drama = getDrama();
   const dramaNodes = getDramaNodes(drama);
   const endings = dramaNodes.filter((node) => node.type === "ending");
+  const current = getCurrentNode(drama);
+  const currentChoices = current?.choices || [];
 
   return `
-    ${statusBar("剧情线", "detail")}
     <section class="story-map-page">
-      <div class="map-head">
-        <div>
-          <span class="eyebrow">${escapeHtml(drama.title)}</span>
-          <h1>剧情线</h1>
-          <p>探索 ${getVisited(drama).length}/${dramaNodes.length} · 结局 ${getEndings(drama).length}/${endings.length} · 信任值 ${getTrust(drama)}</p>
-        </div>
-        <button class="ghost-action" data-action="start">继续</button>
+      <div class="map-nav">
+        <button class="map-back icon-back" data-action="view" data-view="detail" aria-label="返回详情"></button>
+        <h1>剧情线</h1>
+        <button class="map-help" type="button" aria-label="剧情线说明">?</button>
+      </div>
+      <div class="map-stats">
+        <span><em>探索</em><strong>${getVisited(drama).length}/${dramaNodes.length}</strong></span>
+        <span><em>结局</em><strong>${getEndings(drama).length}/${endings.length}</strong></span>
+        <span><em>信任值</em><strong>${getTrust(drama)}</strong></span>
       </div>
       <div class="map-board">
         ${dramaNodes.map((node) => {
           const isVisited = getVisited(drama).includes(node.id);
           const isLocked = node.type === "paid" && !isPaid(drama);
-          const isActive = node.id === getCurrentNode(drama)?.id;
+          const isActive = node.id === current?.id;
+          const x = Math.max(13, Math.min(87, Number(node.position.x) || 50));
+          const y = Math.max(12, Math.min(86, Number(node.position.y) || 50));
           return `
             <button
               class="story-node ${isVisited ? "is-visited" : ""} ${isLocked ? "is-locked" : ""} ${isActive ? "is-current" : ""}"
-              style="left:${node.position.x}%;top:${node.position.y}%"
+              style="left:${x}%;top:${y}%"
               data-action="node"
               data-node="${node.id}">
-              <small>${isLocked ? "待解锁" : node.type === "ending" ? "结局" : "剧情"}</small>
-              <strong>${escapeHtml(node.title.replace(/^第\\d+章\\s*/, "").replace(/^第\\d+集\\s*/, ""))}</strong>
+              <span class="node-thumb ${drama.coverClass}"></span>
+              <small>${isLocked ? "付费节点" : isActive ? "当前节点" : node.type === "ending" ? "结局" : "剧情"}</small>
+              <strong>${escapeHtml(cleanNodeTitle(node.title))}</strong>
             </button>
           `;
         }).join("")}
@@ -709,6 +774,27 @@ function mapView() {
           <path d="M54 46 C57 62,58 74,60 82" />
         </svg>
       </div>
+      <section class="map-detail-card">
+        <span class="poster-surface ${drama.coverClass}"></span>
+        <div class="map-detail-copy">
+          <span class="eyebrow">当前节点</span>
+          <h2>${escapeHtml(current?.title || "未开始")}</h2>
+          <p>${escapeHtml(current?.summary || "")}</p>
+          <div class="map-choice-row">
+            ${currentChoices.slice(0, 2).map((choice, index) => `
+              <button class="map-choice ${index === 0 ? "is-hot" : ""}" data-action="choice" data-index="${index}">
+                <strong>${escapeHtml(choice.label)}</strong>
+                <small>信任值 ${choice.trust >= 0 ? "+" : ""}${choice.trust}</small>
+              </button>
+            `).join("")}
+          </div>
+          <div class="map-actions">
+            <button class="primary-action" data-action="start"><span class="play-mini"></span>观看本节点</button>
+            <button class="ghost-on-dark" data-action="view" data-view="detail">回看详情</button>
+            <button class="gold-button" data-action="node" data-node="${escapeHtml(drama.unlockNode)}">解锁 ♡ ${Number(drama.price || 0).toFixed(0)}</button>
+          </div>
+        </div>
+      </section>
     </section>
     ${bottomTabs("home")}
   `;
